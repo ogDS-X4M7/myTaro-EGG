@@ -30,20 +30,15 @@ exports.cors = {
 
 // 加载 errorHandler 中间件, 加载 jwtHandler 中间件，加载 jwt 中间件， 加载 authz
 // exports.middleware = ['errorHandler', 'getToken', 'jwtHandler', 'jwt', 'authz'];
-exports.middleware = ['errorHandler'];
-// exports.middleware = ['errorHandler', 'jwtHandler'];
+exports.middleware = ['errorHandler', 'jwtHandler', 'jwt'];
 
-// 可以对jwtHandler中间件进行设置 ，如：设定公共api
-exports.jwtHandler = {
-    public: '/login',
-};
 // jwt中间件配置
 exports.jwt = {
     secret: JWT.SECRET,
     expiresIn: JWT.EXPIRES_IN,
-    // 配置忽略的路径
     ignore(ctx) {
-        // todo 目前先排除正在自动化使用到的接口
+        // ignore是egg中间件的配置
+        // 配置忽略的路径，符合规则的return true则请求将不经过jwt中间件
         const reg = /swagger|\/public/g;
         if (ctx.request.url === '/') {
             return true
@@ -65,7 +60,7 @@ exports.jwt = {
             return null;
         }
     },
-    // 这里对登录接口或页面进行了过滤如：
+    // 这里的配置将在jwt中间件中获取，由koa-jwt2进行过滤。
     unless: { path: ["/login", "/api/v1/login"] }
 };
 

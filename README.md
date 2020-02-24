@@ -12,20 +12,61 @@ Egg.js 遵循约定大于配置，需要写的 controller 、service 等只要�
 
 ```shell
 # 使用git下载项目
-$ git clone 
+$ git clone https://gitee.com/yu-qian/egg-start.git
 
 # 安装依赖
 $ npm install
 ```
 拷贝项目根目录的 config.example.js 并重命名为 config.js，并且同样放在项目更目录，并且填入项目的配置：
 
-
+```js
+exports.config = {
+    // 服务
+    SERVER: {
+        PORT: 7001,// 服务启动的端口（默认7001）
+        HOST_NAME: '127.0.0.1', // 服务启动的IP（本机）
+    },
+    // MongoDB数据库
+    MONGO_DB: {
+        DB_USER: '', // 用户
+        DB_PASSWORD: '',  //数据库密码
+        DB_IP: '', // IP
+        DB_PORT: '', // 端口
+        DB_NAME: '' // 数据库名称
+    },
+    // 七牛存储
+    QINIU: {
+        AK: '', // Access Key
+        SK: '', // Secret Key
+        ZONE: '', // Zone_z0 华东, Zone_z1 华北, Zone_z2 华南, Zone_na0 北美
+        BUCKET: '',
+        BASE_URL: '', // 用于拼接已上传文件的完整地址
+    },
+    // REDIS服务端缓存
+    REDIS: {
+        PASSWORD: '', // 密码
+        IP: '', // IP
+        PORT: 6379 // 端口（默认端口6379）
+    },
+    // jsonwebtoken配置，请自行修改
+    JWT: {
+        SECRET: 'egg-start', // token的密钥（默认egg-start）
+        EXPIRES_IN: '8h' // token过期时间 (默认8h)
+    }
+}
+```
 
 启动项目：
 
 ```shell
 # 启动dev
 $ npm run dev
+
+# 启动部署
+$ npm start
+
+# 停止
+$ npm stop
 ```
 
 ## 2、目录结构
@@ -713,7 +754,7 @@ module.exports = RolesController;
 
 配置角色的路由：
 
-```js
+```diff
 // app/router.js
 
 module.exports = app => {
@@ -724,7 +765,7 @@ module.exports = app => {
 
   router.get('/', controller.home.index);
   router.resources('todos', '/api/v1/todos', controller.todos); // todo接口
-  router.resources('roles', '/api/v1/roles', controller.roles); // 角色
++  router.resources('roles', '/api/v1/roles', controller.roles); // 角色
 };
 
 ```
@@ -911,10 +952,6 @@ module.exports = option => {
 // 加载 errorHandler 中间件, 加载 jwtHandler 中间件
 exports.middleware = ['errorHandler', 'jwtHandler'];
 
-// 可以对jwtHandler中间件进行设置 ，如：设定公共api
-exports.jwtHandler = {
-    public: '/login',
-};
 ```
 
 上面使用的是我们自己的中间件jwtHandler处理jwtj验证失败的响应格式，接下来是使用 koa-jwt2 中间件，以本项目为例，我们再写一个中间件来使用 koa-jwt2。
@@ -942,22 +979,18 @@ module.exports = options => {
 // 加载 errorHandler 中间件, 加载 jwtHandler 中间件，加载 jwt 中间件
 exports.middleware = ['errorHandler', 'jwtHandler', 'jwt'];
 
-// 可以对jwtHandler中间件进行设置 ，如：设定公共api
-exports.jwtHandler = {
-    public: '/login',
-};
 // jwt中间件配置
 exports.jwt = {
-    secret: 'exe-tools',
-    expiresIn: "8h",
-    // 配置忽略的路径
+    secret: JWT.SECRET,
+    expiresIn: JWT.EXPIRES_IN,
     ignore(ctx) {
-        // todo 目前先排除正在自动化使用到的接口
-        const reg = /\/api\/v1\/colors|\/autopack/g;
-        if(ctx.request.url === '/') {
+        // ignore是egg中间件的配置
+        // 配置忽略的路径，符合规则的return true则请求将不经过jwt中间件
+        const reg = /swagger|\/public/g;
+        if (ctx.request.url === '/') {
             return true
         }
-        if(reg.test(ctx.request.url)) {
+        if (reg.test(ctx.request.url)) {
             return true
         }
         return reg.test(ctx.request.url);
@@ -974,7 +1007,7 @@ exports.jwt = {
             return null;
         }
     },
-    // 这里对登录接口或页面进行了过滤如：
+    // 这里的配置将在jwt中间件中获取，由koa-jwt2进行过滤。
     unless: { path: ["/login", "/api/v1/login"] }
 };
 ```
@@ -1046,7 +1079,7 @@ module.exports = UsersController;
 
 **添加用户登录的路由**
 
-```js
+```diff
 // app/router.js
 
 module.exports = app => {
@@ -1058,7 +1091,7 @@ module.exports = app => {
   router.get('/', controller.home.index);
 
   // 自定义API
-  router.post('/api/v1/login', controller.users.login); // 定义一个用户登录的post接口
++  router.post('/api/v1/login', controller.users.login); // 定义一个用户登录的post接口
   
   router.resources('users', '/api/v1/users', controller.users); // 用户接口
   router.resources('todos', '/api/v1/todos', controller.todos); // todo接口
@@ -1126,14 +1159,27 @@ exports.jwt = {
 };
 
 // ...
+
 exports.swaggerdoc = {
     dirScanner: './app/controller',
+    // basePath: '127.0.0.1:7002',
     apiInfo: {
-        title: '飞毛腿接口文档',
-        description: '飞毛腿接口文档',
+        title: '接口文档',
+        description: 'api接口文档',
         version: '1.0.0',
     },
-    schemes: ['http'],
+    schemes: ['http', 'https'],
+    consumes: ['application/json'],
+    produces: ['application/json'],
+    securityDefinitions: {
+        Authorization: {
+            type: 'apiKey',
+            name: 'Authorization',
+            in: 'header',
+        },
+    },
+    enableSecurity: true,
+    enableValidate: true,
     enable: true,
     routerMap: true,
 }
