@@ -30,7 +30,7 @@ exports.cors = {
 
 // 加载 errorHandler 中间件, 加载 jwtHandler 中间件，加载 jwt 中间件， 加载 authz
 // exports.middleware = ['errorHandler', 'getToken', 'jwtHandler', 'jwt', 'authz'];
-exports.middleware = ['errorHandler', 'jwtHandler', 'jwt'];
+exports.middleware = ['rateLimit', 'errorHandler', 'jwtHandler', 'jwt'];
 
 // jwt中间件配置
 exports.jwt = {

@@ -25,6 +25,7 @@
     "egg-validate": "^2.0.2",
     "jsonwebtoken": "^8.5.1",
     "koa-jwt2": "^1.0.3",
+    "koa-ratelimit": "^4.2.1",
     "md5": "^2.2.1",
     "uuid": "^3.3.3"
   },

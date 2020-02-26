@@ -78,24 +78,6 @@ class CacheService extends Service {
             return data
         }
     }
-
-    async scanAll(key) {
-        let allKey = []
-        const _scan = async (index, match, key) => {
-            const data = await this.app.redis.scan(index, match, key)
-            if(data[1].length) {
-                console.log(data[1]);
-                allKey = allKey.concat(data[1])
-            }
-            if(data[0] !== '0') {
-                const value = parseInt(data[0])
-                _scan(value, match, key)
-            }
-        }
-        await _scan(0, "match", key)
-        console.log(111);
-        return allKey
-    }
     
     async scanAll(key) {
         let allKey = []

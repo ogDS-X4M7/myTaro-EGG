@@ -1103,7 +1103,7 @@ module.exports = app => {
 
 ### 4.5 用户接口权限casbin
 
-安装casbin和 casbin的 mongoose 驱动
+安装casbin和 casbin的 mongoose 驱动：
 
 ```shell
 $ npm install casbin --save
@@ -1111,8 +1111,6 @@ $ npm install @elastic.io/casbin-mongoose-adapter --save
 ```
 
 待补充…
-
-
 
 
 
@@ -1407,27 +1405,264 @@ ctx.validate(ctx.rule.createResource, ctx.request.body);
 
 ## 6、Redis使用
 
-https://github.com/MicrosoftArchive/redis/releases
+### 6.1、下载安装 redis（Windows）
 
+首先访问 [下载地址](https://github.com/MicrosoftArchive/redis/releases) ，选择自己需要的版本进行下载安装（展开Assets，选择下载msi后缀的文件）。
+
+打开安装目录，双击运行里面的 redis-cli.exe 即可连接到redis。
+
+### 6.2、配置redis密码（Windows）
+
+可以参考公众号文章 [【前端开发日常 - 4】Windows安装Redis及简单使用](https://mp.weixin.qq.com/s?__biz=MzU3NzcyNzk4Ng==&mid=2247483694&idx=1&sn=2455a4500f9b97342190ebb3b23153a4&chksm=fd017db3ca76f4a5829dd19aa84b6e4e74d870c3001ca3febcae3fee511fc0bfd992e5e9dbdb&scene=126&sessionid=1582681237&key=47671e6fec042c4a588719437dba9e394ddf6988803540c3b5879c18f2b24d1d3a2fe0c5131b7094bb9e687d6e26a6409e24c74b0b06a75da9a064ab8b8a196a5d31c5df1520ef681a14b2a43e6255f9&ascene=1&uin=MTY3MjM1NzA4MQ%3D%3D&devicetype=Windows+7&version=62080079&lang=zh_CN&exportkey=A5dLC798w2N2nlYQd0Gu2s0%3D&pass_ticket=E%2Bfl8tsgulRsmRhyidh7wX74m1QZQWpFJm66YqIoIiykO%2FJPt%2FxoY52PL4VM7BZ1) 。
+
+### 6.3、使用 egg-redis 插件
+
+#### 6.3.1、安装egg-redis
+
+```shell
+ $ npm i egg-redis --save
 ```
-egg-redis 
-$ npm i egg-redis --save 
-/ / 开启插件 
-// ${app_root}/config/plugin.js 
+
+#### 6.3.2、启用插件，并且配置插件
+
+```js
+// config/plugin.js
 exports.redis = { 
-enable: true, 
-package: 'egg-redis', 
+    enable: true, 
+    package: 'egg-redis', 
 }; 
-/ / 在config.default.js中进行配置 
-config.redis = { 
-client: { 
-port: 6379, // Redis port 
-host: '127.0.0.1', // Redis host 
-password: 'auth', 
-db: 0, 
-}, 
+
+
+// config.js
+exports.config = {
+    // ...
+    REDIS: {
+        PASSWORD: '密码',
+        IP: 'IP',
+        PORT: 6379
+    }
+    // ...
+}
+
+
+// config/config.default.js
+const { config } = require('../config.js')
+const { REDIS } = config;
+
+// ...
+exports.redis = {
+    client: {
+        port: REDIS.PORT, // Redis port 
+        host: REDIS.IP, // Redis host 
+        password: REDIS.PASSWORD,
+        db: 0,
+    },
 }
 ```
 
+#### 6.3.3、创建一个 service 使用 redis
 
+```js
+// app/service/cache.js
+
+const Service = require('egg').Service;
+
+class CacheService extends Service {
+    getKey(array) {
+        let key = array.splice(0, 1)[0];
+        array.forEach(element => {
+            if (element && key) {
+                key = key.replace(/\${\w*}/, element)
+            }
+        });
+        return key
+    }
+
+    getScanKey(str) {
+        return str.replace(/\${\w*}/, '*');
+    }
+
+    async set(key, value, seconds) {
+        value = JSON.stringify(value);
+        if (this.app.redis) {
+            if (!seconds) {
+                return await this.app.redis.set(this.getKey(key), value);
+            } else {
+                return await this.app.redis.set(this.getKey(key), value, 'EX', seconds)
+            }
+        }
+    }
+
+    async get(key) {
+        if (this.app.redis) {
+            const data = await this.app.redis.get(this.getKey(key));
+            if (!data) return;
+            return JSON.parse(data)
+        }
+    }
+
+    async del(key) {
+        if (this.app.redis) {
+            const data = await this.app.redis.del(this.getKey(key));
+            return data
+        }
+    }
+
+    async incr(key) {
+        if (this.app.redis) {
+            const data = await this.app.redis.incr(this.getKey(key));
+            if (!data) return;
+            return JSON.parse(data)
+        }
+    }
+
+    async sadd(key, value, seconds) {
+        value = JSON.stringify(value);
+        if (this.app.redis) {
+            if (!seconds) {
+                await this.app.redis.sadd(this.getKey(key), value);
+            } else {
+                await this.app.redis.sadd(this.getKey(key), value, 'EX', seconds)
+            }
+        }
+    }
+
+    async sismember(key, value) {
+        value = JSON.stringify(value);
+        if (this.app.redis) {
+            const data = await this.app.redis.sismember(this.getKey(key), value);
+            if (!data) return;
+            return JSON.parse(data)
+        }
+    }
+
+    async scard(key) {
+        if (this.app.redis) {
+            const data = await this.app.redis.scard(this.getKey(key));
+            if (!data) return;
+            return data
+        }
+    }
+    
+    async scanAll(key) {
+        let allKey = []
+        const _scan = async (index, match, key) => {
+            const data = await this.app.redis.scan(index, match, key)
+            if(data[1].length) {
+                allKey = allKey.concat(data[1])
+            }
+            if(data[0] !== '0') {
+                const value = parseInt(data[0])
+                await _scan(value, match, key)
+            }
+        }
+        await _scan(0, "match", this.getScanKey(key))
+        return allKey
+    }
+}
+
+module.exports = CacheService;
+```
+
+#### 6.3.4、Redis key的定义规则和使用
+
+**定义**
+
+```js
+// app/constant/redis.js
+
+module.exports = {
+
+    // 定义的规则 KEY需要的ID_存储的内容_存储的内容字段名
+
+    USER_DATA: 'user:${userId}', // user(json)
+    USER_PROPERTY: 'user:${userId}:${property}', // value
+    USER_TICKET: 'user:${userId}:ticket', // ticket
+    USER_TOKEN: 'user:${userId}:token', // token
+
+    TICKET_USER_ID: 'ticket:${ticket}', // userId
+
+    TOKEN_USER: 'token:${token}', // user(json)
+    TOKEN_USER_ID: 'token:${token}', // userId
+}
+```
+
+**使用**
+
+以储存用户token和基本信息为例：
+
+```js
+async handleUser(user) {
+    const ctx = this.ctx;
+    
+    // ...
+    // 获取redis的值
+    let ticket = await ctx.service.cache.get([USER_TICKET, user._id]);
+    let token = await ctx.service.cache.get([USER_TOKEN, user._id]);
+    
+    // ...
+    // 设置redis的值
+    await ctx.service.cache.set([TOKEN_USER_ID, token], user._id, ctx.app.constant.TOKEN_EX * 60 * 60);
+    await ctx.service.cache.set([TICKET_USER_ID, ticket], user._id, ctx.app.constant.TOKEN_EX * 60 * 60);
+    await ctx.service.cache.set([USER_DATA, user._id], user, ctx.app.constant.TOKEN_EX * 60 * 60);
+    await ctx.service.cache.set([USER_TOKEN, user._id], token, ctx.app.constant.TOKEN_EX * 60 * 60);
+    await ctx.service.cache.set([USER_TICKET, user._id], ticket, ctx.app.constant.TOKEN_EX * 60 * 60);
+    // ...
+}
+```
+
+### 7、限流
+
+使用 koa 的中间件 [koa-ratelimit](https://github.com/koajs/ratelimit) 来限流，下载安装：
+
+```shell
+$ npm install koa-ratelimit
+```
+
+然后我们来为项目创建一个中间件：
+
+```js
+// app/middleware/rate_limit.js
+
+const ratelimit = require("koa-ratelimit");
+const db = new Map();
+
+// 文档地址 https://github.com/koajs/ratelimit
+module.exports = options => {
+    return ratelimit({
+        driver: 'memory', // 储存的方式，可以是内存和Redis，内存："memory"，redis: "redis"
+        db: db, // 内存方式使用一个Map"，redis方式需要传入redis的链接实例
+        duration: 3000, // 限制时间，在这段时间之内限制访问次数 单位是：milliseconds
+        errorMessage: '访问过于频繁，请稍后重试！', // 自定义错误的信息
+        id: (ctx) => ctx.ip, // 用于比较的标识，这里使用IP
+        headers: { // 自定义响应头
+            remaining: 'Rate-Limit-Remaining',
+            reset: 'Rate-Limit-Reset',
+            total: 'Rate-Limit-Total'
+        },
+        max: 10, // 在 duration 时间内可以访问的次数
+        disableHeader: false, // 设置是否需要发送响应头remaining, reset, total
+        whitelist: (ctx) => {
+            // some logic that returns a boolean
+            // 白名单，如果返回true则不限制
+        },
+        blacklist: (ctx) => {
+            // some logic that returns a boolean
+            // 黑名单，如果返回true，将抛出403错误
+        }
+    })
+};
+
+```
+
+使用中间件：
+
+```diff
+// config/config.default.js
+
+- exports.middleware = ['errorHandler', 'getToken', 'jwtHandler', 'jwt', 'authz'];
++ exports.middleware = ['rateLimit', 'errorHandler', 'getToken', 'jwtHandler', 'jwt', 'authz'];
+```
+
+接下来我们可以频繁调用接口查看返回数据，如果太过频繁，后台会返回错误信息。
 
