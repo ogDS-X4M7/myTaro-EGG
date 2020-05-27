@@ -17,7 +17,7 @@ $ git clone https://gitee.com/yu-qian/egg-start.git
 # 安装依赖
 $ npm install
 ```
-拷贝项目根目录的 config.example.js 并重命名为 config.js，并且同样放在项目更目录，并且填入项目的配置：
+拷贝项目根目录的 config.example.js 并重命名为 config.js，并且同样放在项目根目录，并且填入项目的配置：
 
 ```js
 exports.config = {
@@ -157,7 +157,7 @@ exports.mongoose = {
 };
 ```
 
-由于以上的方式会将数据库信息，因此我们需要在 config.js 里面配置，并且 config.js 我们不提交到 git 仓库，修改代码为：
+由于以上的方式会将数据库信息暴露，因此我们需要改为在 config.js 里面配置，并且我们不把 config.js 提交到 git 仓库，修改代码为：
 
 ```js
 // config.js
@@ -189,7 +189,7 @@ exports.mongoose = {
 };
 ```
 
-### 3.3、使用 egg-dotenv
+### 3.3、使用 egg-dotenv （本项目暂无）
 
 为了将数据库用户名、密码等信息存在本地而不提交到仓库，使用 `egg-dotenv` 
 
