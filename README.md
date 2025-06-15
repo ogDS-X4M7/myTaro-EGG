@@ -1,7 +1,7 @@
 # 使用指南
 
 这个项目是myTaro-TaroUI的后台，参考了https://gitee.com/yu-qian/egg-start.git 的模版，进行修改完善供我个人小程序项目使用。
-下载后安装依赖，复制config.example.js为config.js，补充好个人数据库信息，APP_ID和APP_SECRET即可使用npm run dev运行。
+下载后安装依赖，复制config.example.js为config.js，补充好个人数据库信息，redis相关信息，APP_ID和APP_SECRET即可使用npm run dev运行。
 
 ## 1、egg-start
 
