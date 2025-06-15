@@ -8,6 +8,8 @@ module.exports = app => {
 
   // 自定义API
   router.post('/api/v1/login', controller.users.login); // 定义一个用户登录的post接口
+  router.get('/hots', controller.hots.index);// 热点
+  router.post('/api/v1/wxLogin', controller.users.wxLogin)
 
   // RESTful api
 
@@ -42,4 +44,5 @@ module.exports = app => {
   router.resources('todos', '/api/v1/todos', controller.todos); // todo接口
   router.resources('roles', '/api/v1/roles', controller.roles); // 角色
   router.resources('policies', '/api/v1/policies', controller.policies); // 策略
+  router.resources('hots', '/api/v1/hots', controller.hots); // 热点接口
 };

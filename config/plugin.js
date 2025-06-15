@@ -18,12 +18,15 @@ exports.swaggerdoc = {
     package: 'egg-swagger-doc',
 };
 
-exports.fullQiniu = {
-    enable: true,
-    package: 'egg-full-qiniu',
-};
+// exports.fullQiniu = {
+//     enable: true,
+//     package: 'egg-full-qiniu',
+// };
 
 exports.redis = {
     enable: true,
     package: 'egg-redis',
 };
+
+
+

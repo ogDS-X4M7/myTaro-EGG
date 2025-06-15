@@ -11,7 +11,7 @@ class TodoService extends Service {
      * @memberof TodoService
      */
     async createTodo(data) {
-        return this.ctx.model.Todo({...data}).save();
+        return this.ctx.model.Todo({ ...data }).save();
     }
 }
 

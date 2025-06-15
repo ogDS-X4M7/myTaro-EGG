@@ -7,7 +7,8 @@
     "dev": "egg-bin dev",
     "debug": "egg-bin debug",
     "start": "egg-scripts start --daemon",
-    "stop": "egg-scripts stop"
+    "stop": "egg-scripts stop",
+    "db": "net start koa-learning"
   },
   "author": "",
   "license": "ISC",

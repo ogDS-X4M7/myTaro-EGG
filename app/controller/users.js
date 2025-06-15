@@ -2,7 +2,7 @@
  * @Controller 用户
  */
 const Controller = require('egg').Controller;
-const { USER_TICKET, TICKET_USER_ID, TOKEN_USER_ID, USER_TOKEN, USER_DATA } = require('../constant/redis');
+const { USER_TICKET, TICKET_USER_ID, TOKEN_USER_ID, USER_TOKEN, USER_DATA, USER_SESSIONKEY, USER_OPENID } = require('../constant/redis');
 const uuidv1 = require('uuid/v1');
 
 const loginRule = {
@@ -28,16 +28,16 @@ class UsersController extends Controller {
                 id: user._id,
                 role
             }, ctx.app.config.jwt.secret, {
-                    expiresIn: ctx.app.config.jwt.expiresIn
-                }
+                expiresIn: ctx.app.config.jwt.expiresIn
+            }
             );
 
-            await ctx.service.cache.set([TOKEN_USER_ID, token], user._id, ctx.app.constant.TOKEN_EX * 60 * 60);
+            await ctx.service.cache.set([TOKEN_USER_ID, token], user._id, ctx.app.constant.TOKEN_EX);
             ticket = uuidv1();
-            await ctx.service.cache.set([TICKET_USER_ID, ticket], user._id, ctx.app.constant.TOKEN_EX * 60 * 60);
-            await ctx.service.cache.set([USER_DATA, user._id], user, ctx.app.constant.TOKEN_EX * 60 * 60);
-            await ctx.service.cache.set([USER_TOKEN, user._id], token, ctx.app.constant.TOKEN_EX * 60 * 60);
-            await ctx.service.cache.set([USER_TICKET, user._id], ticket, ctx.app.constant.TOKEN_EX * 60 * 60);
+            await ctx.service.cache.set([TICKET_USER_ID, ticket], user._id, ctx.app.constant.TOKEN_EX);
+            await ctx.service.cache.set([USER_DATA, user._id], user, ctx.app.constant.TOKEN_EX);
+            await ctx.service.cache.set([USER_TOKEN, user._id], token, ctx.app.constant.TOKEN_EX);
+            await ctx.service.cache.set([USER_TICKET, user._id], ticket, ctx.app.constant.TOKEN_EX);
         }
         ctx.body = {
             code: 200,
@@ -104,6 +104,49 @@ class UsersController extends Controller {
             }
         } catch (err) {
             throw err;
+        }
+    }
+
+    async wxLogin() {
+        // ctx 就是上下文，这里ctx.app.config就能拿到文件app/config/config.default.js
+        const ctx = this.ctx;
+        // console.log(ctx)
+        // console.log(ctx.app.config)
+        const { code } = ctx.request.body;
+        const wxData = await ctx.service.user.getWxOpenId(code)
+        // 前面getWxOpenId有做抛出错误，中间件error_handler会接手处理，所以如果有问题不会继续执行
+        const { session_key, openid } = wxData;
+        // createWxUser有则返回用户，无则新建用户
+        const user = await ctx.service.user.createWxUser({
+            // 需要的参数都看设定的模版——这里对应model/user
+            openId: openid,
+            platform: 0,//考虑不同平台，默认1系统，这里就得传0表示微信
+        })
+        // 获取token
+        let token = await ctx.service.cache.get([USER_TOKEN, user._id]);
+        console.log(token);
+        // 如果获取不到token，也就是redis中(缓存中)没有token，可能失效或者未注册用户，总之需要生成token，并且redis缓存token和用户信息
+        if (!token) {
+            console.log('生成token')
+            token = ctx.app.jwt.sign({
+                id: user._id
+            }, ctx.app.config.jwt.secret, {
+                expiresIn: ctx.app.config.jwt.expiresIn
+            }
+            );
+            // 使用cache，也就是redis缓存token和用户信息
+            await ctx.service.cache.set([USER_TOKEN, user._id], token, ctx.app.constant.TOKEN_EX)
+            await ctx.service.cache.set([USER_DATA, user._id], user, ctx.app.constant.TOKEN_EX)
+            // 
+            await ctx.service.cache.set([USER_SESSIONKEY, user._id], session_key, ctx.app.constant.TOKEN_EX)
+            await ctx.service.cache.set([USER_OPENID, user._id], openid, ctx.app.constant.TOKEN_EX)
+        }
+
+        ctx.body = {
+            code: 200,
+            data: { user, token },
+            success: true,
+            msg: ''
         }
     }
 }

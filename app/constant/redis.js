@@ -6,6 +6,8 @@ module.exports = {
     USER_PROPERTY: 'user:${userId}:${property}', // value
     USER_TICKET: 'user:${userId}:ticket', // ticket
     USER_TOKEN: 'user:${userId}:token', // token
+    USER_SESSIONKEY: 'user:${userId}:sessionkey', // sessionkey
+    USER_OPENID: 'user:${userId}:openid', // openid
 
     TICKET_USER_ID: 'ticket:${ticket}', // userId
 

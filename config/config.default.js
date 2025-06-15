@@ -1,5 +1,5 @@
 const { config } = require('../config.js')
-const { MONGO_DB, QINIU, REDIS, JWT, SERVER } = config;
+const { MONGO_DB, QINIU, REDIS, JWT, SERVER, WX } = config;
 
 exports.keys = 'egg-start'; // <此处改为你自己的 Cookie 安全字符串>
 
@@ -61,7 +61,8 @@ exports.jwt = {
         }
     },
     // 这里的配置将在jwt中间件中获取，由koa-jwt2进行过滤。
-    unless: { path: ["/login", "/api/v1/login"] }
+    unless: { path: ["/login", "/api/v1/login", "/api/v1/todos", "/api/v1/hots"] }
+    // , "/api/v1/wxLogin"
 };
 
 exports.authz = {
@@ -153,4 +154,9 @@ exports.redis = {
         password: REDIS.PASSWORD,
         db: 0,
     },
+}
+
+exports.wx = {
+    appId: WX.APP_ID,
+    appSecret: WX.APP_SECRET
 }

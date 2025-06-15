@@ -1,7 +1,7 @@
 exports.config = {
     // 服务
     SERVER: {
-        PORT: 7001,// 服务启动的端口
+        PORT: 7002,// 服务启动的端口
         HOST_NAME: '127.0.0.1', // 服务启动的IP（本机）
     },
     // MongoDB数据库
@@ -30,5 +30,9 @@ exports.config = {
     JWT: {
         SECRET: 'egg-start', // token的密钥（默认egg-start）
         EXPIRES_IN: '8h' // token过期时间 (默认8h)
+    },
+    WX: {
+        APP_ID: '',
+        APP_SECRET: '',
     }
 }
