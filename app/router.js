@@ -10,6 +10,7 @@ module.exports = app => {
   router.post('/api/v1/login', controller.users.login); // 定义一个用户登录的post接口
   router.get('/hots', controller.hots.index);// 热点
   router.post('/api/v1/wxLogin', controller.users.wxLogin)
+  router.post('/api/v1/updateUser', controller.users.userInfo)
 
   // RESTful api
 
@@ -45,4 +46,5 @@ module.exports = app => {
   router.resources('roles', '/api/v1/roles', controller.roles); // 角色
   router.resources('policies', '/api/v1/policies', controller.policies); // 策略
   router.resources('hots', '/api/v1/hots', controller.hots); // 热点接口
+  // router.resources('userInfo', '/api/v1/updateUser', controller.users);
 };

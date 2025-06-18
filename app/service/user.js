@@ -64,6 +64,12 @@ class UserService extends Service {
         console.log('创建新用户')
         return newUser;
     }
+
+    async updateUser(data) {
+        // const ctx = this.ctx;
+        const updateRes = await this.updateOneUser({ _id: data.userid }, { $set: { avatarUrl: data.avatarUrl, name: data.userName } })
+        return updateRes;
+    }
 }
 
 module.exports = UserService;
