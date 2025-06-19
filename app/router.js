@@ -11,6 +11,7 @@ module.exports = app => {
   router.get('/hots', controller.hots.index);// 热点
   router.post('/api/v1/wxLogin', controller.users.wxLogin)
   router.post('/api/v1/updateUser', controller.users.userInfo)
+  router.post('/api/v1/autoLogin', controller.users.autoLogin)
 
   // RESTful api
 

@@ -2,7 +2,7 @@
  * @Controller 用户
  */
 const Controller = require('egg').Controller;
-const { USER_TICKET, TICKET_USER_ID, TOKEN_USER_ID, USER_TOKEN, USER_DATA, USER_SESSIONKEY, USER_OPENID } = require('../constant/redis');
+const { USER_TICKET, TICKET_USER_ID, TOKEN_USER_ID, USER_TOKEN, USER_DATA, USER_SESSIONKEY, USER_OPENID, TOKEN_USER_AVATARURL, TOKEN_USER_USERNAME } = require('../constant/redis');
 const uuidv1 = require('uuid/v1');
 
 const loginRule = {
@@ -139,10 +139,12 @@ class UsersController extends Controller {
             // 使用cache，也就是redis缓存token和用户信息
             await ctx.service.cache.set([USER_TOKEN, user._id], token, ctx.app.constant.TOKEN_EX)
             await ctx.service.cache.set([USER_DATA, user._id], user, ctx.app.constant.TOKEN_EX)
-            // 缓存sessionkey、openid，缓存可以使用token获取的用户id
+            // 缓存sessionkey、openid，缓存可以使用token获取的用户id、头像、昵称；
             await ctx.service.cache.set([USER_SESSIONKEY, user._id], session_key, ctx.app.constant.TOKEN_EX)
             await ctx.service.cache.set([USER_OPENID, user._id], openid, ctx.app.constant.TOKEN_EX)
             await ctx.service.cache.set([TOKEN_USER_ID, token], user._id, ctx.app.constant.TOKEN_EX)
+            await ctx.service.cache.set([TOKEN_USER_AVATARURL, token], avatarUrl, ctx.app.constant.TOKEN_EX)
+            await ctx.service.cache.set([TOKEN_USER_USERNAME, token], userName, ctx.app.constant.TOKEN_EX)
         }
         ctx.body = {
             code: 200,
@@ -152,6 +154,7 @@ class UsersController extends Controller {
         }
     }
 
+    // 远程更新用户昵称与头像
     async userInfo() {
         const ctx = this.ctx;
         const { token, avatarUrl, userName } = ctx.request.body; // , avatarUrl, userName
@@ -162,11 +165,31 @@ class UsersController extends Controller {
         // console.log(userid);
         const updateRes = await ctx.service.user.updateUser({ userid: userid, avatarUrl: avatarUrl, userName: userName });
         // console.log(updateRes);
+        // 更新头像昵称也需要缓存进redis
+        await ctx.service.cache.set([TOKEN_USER_AVATARURL, token], avatarUrl, ctx.app.constant.TOKEN_EX)
+        await ctx.service.cache.set([TOKEN_USER_USERNAME, token], userName, ctx.app.constant.TOKEN_EX)
         ctx.body = {
             code: 200,
             data: { updateRes },
             success: true,
             msg: '更新成功'
+        }
+    }
+
+    // 自动登录功能接口
+    async autoLogin() {
+        const ctx = this.ctx;
+        console.log('hello')
+        const { token } = ctx.request.body;
+        console.log(token)
+        // 正是上面设置了可以通过token获取的id、头像、昵称，因此这里可以从redis里由token拿到头像昵称，实现快速自动登录效果
+        let userAvatarUrl = await ctx.service.cache.get([TOKEN_USER_AVATARURL, token]);
+        let userName = await ctx.service.cache.get([TOKEN_USER_USERNAME, token]);
+        ctx.body = {
+            code: 200,
+            data: { userAvatarUrl, userName },
+            success: true,
+            msg: '自动登录成功'
         }
     }
 }
