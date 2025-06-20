@@ -61,8 +61,8 @@ exports.jwt = {
         }
     },
     // 这里的配置将在jwt中间件中获取，由koa-jwt2进行过滤。
-    unless: { path: ["/login", "/api/v1/login", "/api/v1/todos", "/api/v1/wxLogin",] }
-    //, "/api/v1/hots" , "/api/v1/wxLogin" "/api/v1/updateUser", '/api/v1/autologin'
+    unless: { path: ["/login", "/api/v1/login", "/api/v1/todos", "/api/v1/wxLogin"] }
+    //, "/api/v1/hots" , "/api/v1/wxLogin" "/api/v1/updateUser", '/api/v1/autologin', '/api/v1/study'
 };
 
 exports.authz = {

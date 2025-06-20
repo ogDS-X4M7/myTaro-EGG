@@ -5,8 +5,8 @@ module.exports = option => {
             await next();
         } catch (err) {
             const pathname = ctx.request.url;
-            if(err.status === 401) { // 如果 koa-jwt2 中间件验证不通过，会得到一个401
-                if(/api\/v1/g.test(pathname)) { // 判断如果是调用Api请求的话，返回用户验证失败的响应
+            if (err.status === 401) { // 如果 koa-jwt2 中间件验证不通过，会得到一个401
+                if (/api\/v1/g.test(pathname)) { // 判断如果是调用Api请求的话，返回用户验证失败的响应
                     ctx.status = 401;
                     ctx.body = {
                         code: 401,

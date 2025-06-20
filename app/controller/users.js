@@ -179,9 +179,8 @@ class UsersController extends Controller {
     // 自动登录功能接口
     async autoLogin() {
         const ctx = this.ctx;
-        console.log('hello')
         const { token } = ctx.request.body;
-        console.log(token)
+        // console.log(token)
         // 正是上面设置了可以通过token获取的id、头像、昵称，因此这里可以从redis里由token拿到头像昵称，实现快速自动登录效果
         let userAvatarUrl = await ctx.service.cache.get([TOKEN_USER_AVATARURL, token]);
         let userName = await ctx.service.cache.get([TOKEN_USER_USERNAME, token]);
@@ -190,6 +189,37 @@ class UsersController extends Controller {
             data: { userAvatarUrl, userName },
             success: true,
             msg: '自动登录成功'
+        }
+    }
+
+    // 更新浏览历史接口
+    async updateHistory() {
+        const ctx = this.ctx;
+        const { token, history } = ctx.request.body;
+        // 利用token在redis里拿到userid
+        let userid = await ctx.service.cache.get([TOKEN_USER_ID, token]);
+        // 再把id和history操作进数据库数组字段
+        let res = await ctx.service.user.updateHistory({ userid, history })
+        ctx.body = {
+            code: 200,
+            data: { res },
+            success: true,
+            msg: '记录浏览历史成功'
+        }
+    }
+
+    // 获取浏览历史接口
+    async getHistory() {
+        const ctx = this.ctx;
+        // 利用token在redis里拿到userid
+        const { token } = ctx.request.body;
+        let userid = await ctx.service.cache.get([TOKEN_USER_ID, token]);
+        let res = await ctx.service.user.getHistory({ userid })
+        ctx.body = {
+            code: 200,
+            data: { res },
+            success: true,
+            msg: '获取浏览历史成功'
         }
     }
 }

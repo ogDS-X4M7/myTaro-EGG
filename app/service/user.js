@@ -1,6 +1,6 @@
 
 const Service = require('egg').Service;
-
+const mongoose = require('mongoose');
 class UserService extends Service {
     async createUser(data) {
         return this.ctx.model.User({ ...data }).save();
@@ -21,10 +21,18 @@ class UserService extends Service {
         return this.ctx.model.User.updateOne(condition, doc).lean();
     }
     async deleteUser(id) {
-
         return this.ctx.model.User.remove({ _id: id }).lean();
     }
 
+    // 添加push操作数据库数组类型字段的方法
+    async addToArrayField(userId, fieldName, item) {
+        return this.ctx.model.User.updateOne(
+            { _id: userId },
+            { $push: { [fieldName]: item } }
+        ).lean();
+    }
+
+    // 通过code获取用户openid作为唯一标识
     async getWxOpenId(JSCODE) {
         const { ctx } = this;
         const { appId, appSecret } = ctx.app.config.wx;
@@ -53,6 +61,7 @@ class UserService extends Service {
         return data;
     }
 
+    // 创建用户，若已有用户则直接返回
     async createWxUser(data) {
         const ctx = this.ctx;
         // 查询是否已有用户，有的话就直接返回用户，没有再新建
@@ -65,10 +74,41 @@ class UserService extends Service {
         return newUser;
     }
 
+    // 更新用户头像昵称信息
     async updateUser(data) {
         // const ctx = this.ctx;
         const updateRes = await this.updateOneUser({ _id: data.userid }, { $set: { avatarUrl: data.avatarUrl, name: data.userName } })
         return updateRes;
+    }
+
+    // 更新浏览历史记录，注意要做去重
+    async updateHistory(data) {
+        // 注意查询用户使用的userid是ObjectId类型，因此要先转换才能查到
+        const userid = mongoose.Types.ObjectId(data.userid);
+        // 先查询用户
+        const user = await this.findOneUser({ _id: userid });
+        // 移除旧记录（如果存在）
+        let newHistory = user.history.filter(item => item !== data.history);
+        // 长度没变说明没有移除，不重复，那么直接添加进数组
+        if (newHistory.length === user.history.length) {
+            return this.addToArrayField(data.userid, 'history', data.history)
+        } else {
+            // 长度变了说明有重复，有移除，那么就需要整个数组更新
+            newHistory.push(data.history);
+            // 更新回数据库
+            return this.updateOneUser(
+                { _id: data.userid },
+                { $set: { history: newHistory } }
+            );
+        }
+    }
+
+    async getHistory(data) {
+        // 注意查询用户使用的userid是ObjectId类型，因此要先转换才能查到
+        const userid = mongoose.Types.ObjectId(data.userid);
+        // 先查询用户
+        const user = await this.findOneUser({ _id: userid });
+        return user.history;
     }
 }
 

@@ -8,10 +8,19 @@ module.exports = app => {
 
   // 自定义API
   router.post('/api/v1/login', controller.users.login); // 定义一个用户登录的post接口
-  router.get('/hots', controller.hots.index);// 热点
-  router.post('/api/v1/wxLogin', controller.users.wxLogin)
-  router.post('/api/v1/updateUser', controller.users.userInfo)
-  router.post('/api/v1/autoLogin', controller.users.autoLogin)
+  router.post('/api/v1/wxLogin', controller.users.wxLogin) // 微信登录
+  router.post('/api/v1/updateUser', controller.users.userInfo) // 更新用户信息-头像昵称
+  router.post('/api/v1/autoLogin', controller.users.autoLogin) // 近期登录过的用户自动登录
+  router.get('/api/v1/hots', controller.hots.index) // 热点接口
+  router.get('/api/v1/study', controller.study.index) // 学习页面接口
+  router.post('/api/v1/updateHistory', controller.users.updateHistory) // 更新浏览历史接口
+  router.post('/api/v1/getHistory', controller.users.getHistory) // 获取浏览历史接口
+  // 这样写接口在jwt判定里发现不是api/v1的话，就会报错重定向，并且不给相应报文;
+  // 在上面写自定义api的好处是，我们可以看到下面的router.resources是对应到文件的：
+  // router.resources('users', '/api/v1/users', controller.users); 用户接口对应到controller.users
+  // router.resources('hots', '/api/v1/hots', controller.hots); 热点接口对应到controller.hots
+  // 但事实上像用户文件里还有很多api，比如这里上面的微信登录，更新信息，自动登录，都得用自定义api来实现
+
 
   // RESTful api
 
@@ -46,6 +55,6 @@ module.exports = app => {
   router.resources('todos', '/api/v1/todos', controller.todos); // todo接口
   router.resources('roles', '/api/v1/roles', controller.roles); // 角色
   router.resources('policies', '/api/v1/policies', controller.policies); // 策略
-  router.resources('hots', '/api/v1/hots', controller.hots); // 热点接口
-  // router.resources('userInfo', '/api/v1/updateUser', controller.users);
+  // router.resources('hots', '/api/v1/hots', controller.hots); // 热点接口
+  // router.resources('study', '/api/v1/study', controller.study) // 学习页面接口
 };
