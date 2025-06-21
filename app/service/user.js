@@ -109,6 +109,7 @@ class UserService extends Service {
         
     }
 
+    // 获取历史记录接口
     async getHistory(data) {
         // 注意查询用户使用的userid是ObjectId类型，因此要先转换才能查到
         const userid = mongoose.Types.ObjectId(data.userid);
@@ -127,8 +128,40 @@ class UserService extends Service {
             { _id: data.userid },
             { $set: { history: [] } }
         );
-
     }
+
+    // 更新点赞接口-包括增加和取消，传参token，url，signal信号-1表示点赞，0表示取消
+    async updateLikes(data) {
+        const userid = mongoose.Types.ObjectId(data.userid);
+        const user = await this.findOneUser({ _id: userid });
+        if(user.likes){
+            // 点赞同样检测重复，同时根据信号判断是点赞还是取消
+            let newLikes = user.likes.filter(item => item !== data.likes);
+            let repeat = false; // 重复信号
+            if (newLikes.length === user.likes.length) repeat=true; 
+            // 长度没变说明无重复，点赞就直接进，取消那就是乱来了
+            if(repeat){
+                if(data.signal){
+                    return this.addToArrayField(data.userid, 'likes', data.likes)
+                }else{
+                    return '错误，并未点赞'
+                }
+            }else{
+                // 重复,取消就把new放进去，点赞也是有问题，反馈点过了
+                if(data.signal){
+                    return '错误，已经点过'
+                }else{
+                    return this.updateOneUser(
+                        { _id: data.userid },
+                        { $set: { likes: newLikes } }
+                    );
+                }
+            }
+        }
+    }
+    // 获取点赞接口
+    // 更新收藏接口-包括增加和取消，传参token，url，signal信号-1表示点赞，0表示取消
+    // 获取收藏接口
 }
 
 module.exports = UserService;

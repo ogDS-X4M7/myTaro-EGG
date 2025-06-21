@@ -239,6 +239,18 @@ class UsersController extends Controller {
     }
 
     // 更新点赞接口-包括增加和取消，传参token，url，signal信号-1表示点赞，0表示取消
+    async updateLikes() {
+        const ctx = this.ctx;
+        const { token, like, signal } = ctx.request.body;
+        let userid = await ctx.service.cache.get([TOKEN_USER_ID, token]);
+        let res = await ctx.service.user.updateLikes({ userid, like, signal })
+        ctx.body = {
+            code: 200,
+            data: { res },
+            success: true,
+            msg: '更新点赞成功'
+        }
+    }
     // 获取点赞接口
     // 更新收藏接口-包括增加和取消，传参token，url，signal信号-1表示点赞，0表示取消
     // 获取收藏接口

@@ -16,6 +16,7 @@ module.exports = app => {
   router.post('/api/v1/updateHistory', controller.users.updateHistory) // 更新浏览历史接口
   router.post('/api/v1/getHistory', controller.users.getHistory) // 获取浏览历史接口
   router.post('/api/v1/clearHistory', controller.users.clearHistory) // 清空浏览历史接口
+  router.post('/api/v1/updateLikes', controller.users.updateLikes) // 更新点赞接口
   // 这样写接口在jwt判定里发现不是api/v1的话，就会报错重定向，并且不给相应报文;
   // 在上面写自定义api的好处是，我们可以看到下面的router.resources是对应到文件的：
   // router.resources('users', '/api/v1/users', controller.users); 用户接口对应到controller.users
