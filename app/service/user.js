@@ -88,19 +88,25 @@ class UserService extends Service {
         // 先查询用户
         const user = await this.findOneUser({ _id: userid });
         // 移除旧记录（如果存在）
-        let newHistory = user.history.filter(item => item !== data.history);
-        // 长度没变说明没有移除，不重复，那么直接添加进数组
-        if (newHistory.length === user.history.length) {
+        if(user.history){
+            let newHistory = user.history.filter(item => item !== data.history);
+            // 长度没变说明没有移除，不重复，那么直接添加进数组
+            if (newHistory.length === user.history.length) {
+                return this.addToArrayField(data.userid, 'history', data.history)
+            } else {
+                // 长度变了说明有重复，有移除，那么就需要整个数组更新
+                newHistory.push(data.history);
+                // 更新回数据库
+                return this.updateOneUser(
+                    { _id: data.userid },
+                    { $set: { history: newHistory } }
+                );
+            }
+        }else {
+            // 没有记录的话直接存放
             return this.addToArrayField(data.userid, 'history', data.history)
-        } else {
-            // 长度变了说明有重复，有移除，那么就需要整个数组更新
-            newHistory.push(data.history);
-            // 更新回数据库
-            return this.updateOneUser(
-                { _id: data.userid },
-                { $set: { history: newHistory } }
-            );
         }
+        
     }
 
     async getHistory(data) {
@@ -109,6 +115,19 @@ class UserService extends Service {
         // 先查询用户
         const user = await this.findOneUser({ _id: userid });
         return user.history;
+    }
+
+    // 清空浏览历史接口
+    async clearHistory(data){
+        // // 注意查询用户使用的userid是ObjectId类型，因此要先转换才能查到
+        // const userid = mongoose.Types.ObjectId(data.userid);
+        // // 先查询用户
+        // const user = await this.findOneUser({ _id: userid });
+        return this.updateOneUser(
+            { _id: data.userid },
+            { $set: { history: [] } }
+        );
+
     }
 }
 

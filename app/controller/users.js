@@ -222,5 +222,25 @@ class UsersController extends Controller {
             msg: '获取浏览历史成功'
         }
     }
+
+    // 清空浏览历史接口
+    async clearHistory(){
+        const ctx = this.ctx;
+        // 利用token在redis里拿到userid
+        const { token } = ctx.request.body;
+        let userid = await ctx.service.cache.get([TOKEN_USER_ID, token]);
+        let res = await ctx.service.user.clearHistory({ userid });
+        ctx.body = {
+            code: 200,
+            data: { res },
+            success: true,
+            msg: '清空浏览历史成功'
+        }
+    }
+
+    // 更新点赞接口-包括增加和取消，传参token，url，signal信号-1表示点赞，0表示取消
+    // 获取点赞接口
+    // 更新收藏接口-包括增加和取消，传参token，url，signal信号-1表示点赞，0表示取消
+    // 获取收藏接口
 }
 module.exports = UsersController;

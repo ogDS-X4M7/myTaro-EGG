@@ -29,6 +29,8 @@ module.exports = app => {
             default: 1
         }, // 0 微信 1 系统
         history: [String], // 浏览历史，数组形式
+        likes: [String], // 我点赞的，数组形式
+        collections:[String], // 我的收藏，数组形式
     }, { timestamps: { createdAt: 'createDate', updatedAt: 'updateDate' } });
     UserSchema.pre('find', function () {
         this.populate('role', 'name');
