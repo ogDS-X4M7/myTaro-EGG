@@ -88,7 +88,7 @@ class UserService extends Service {
         // 先查询用户
         const user = await this.findOneUser({ _id: userid });
         // 移除旧记录（如果存在）
-        if(user.history){
+        if (user.history) {
             let newHistory = user.history.filter(item => item !== data.history);
             // 长度没变说明没有移除，不重复，那么直接添加进数组
             if (newHistory.length === user.history.length) {
@@ -102,11 +102,11 @@ class UserService extends Service {
                     { $set: { history: newHistory } }
                 );
             }
-        }else {
+        } else {
             // 没有记录的话直接存放
             return this.addToArrayField(data.userid, 'history', data.history)
         }
-        
+
     }
 
     // 获取历史记录接口
@@ -119,7 +119,7 @@ class UserService extends Service {
     }
 
     // 清空浏览历史接口
-    async clearHistory(data){
+    async clearHistory(data) {
         // // 注意查询用户使用的userid是ObjectId类型，因此要先转换才能查到
         // const userid = mongoose.Types.ObjectId(data.userid);
         // // 先查询用户
@@ -134,29 +134,31 @@ class UserService extends Service {
     async updateLikes(data) {
         const userid = mongoose.Types.ObjectId(data.userid);
         const user = await this.findOneUser({ _id: userid });
-        if(user.likes){
+        if (user.likes) {
             // 点赞同样检测重复，同时根据信号判断是点赞还是取消
-            let newLikes = user.likes.filter(item => item !== data.likes);
+            let newLikes = user.likes.filter(item => item !== data.like);
             let repeat = false; // 重复信号
-            if (newLikes.length === user.likes.length) repeat=true; 
+            if (newLikes.length === user.likes.length) repeat = true;
             // 长度没变说明无重复，点赞就直接进，取消那就是乱来了
-            if(repeat){
-                if(data.signal){
-                    return this.addToArrayField(data.userid, 'likes', data.likes)
-                }else{
+            if (repeat) {
+                if (data.signal) {
+                    return this.addToArrayField(data.userid, 'likes', data.like)
+                } else {
                     return '错误，并未点赞'
                 }
-            }else{
+            } else {
                 // 重复,取消就把new放进去，点赞也是有问题，反馈点过了
-                if(data.signal){
+                if (data.signal) {
                     return '错误，已经点过'
-                }else{
+                } else {
                     return this.updateOneUser(
                         { _id: data.userid },
                         { $set: { likes: newLikes } }
                     );
                 }
             }
+        } else {
+            return this.addToArrayField(data.userid, 'likes', data.like)
         }
     }
     // 获取点赞接口

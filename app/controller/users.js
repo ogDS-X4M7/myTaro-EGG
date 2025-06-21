@@ -224,7 +224,7 @@ class UsersController extends Controller {
     }
 
     // 清空浏览历史接口
-    async clearHistory(){
+    async clearHistory() {
         const ctx = this.ctx;
         // 利用token在redis里拿到userid
         const { token } = ctx.request.body;
