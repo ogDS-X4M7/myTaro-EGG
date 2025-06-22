@@ -932,7 +932,7 @@ module.exports = option => {
                         code: 401,
                         data: {},
                         success: false,
-                        msg: `用户登录信息已失效，请尝试登录`
+                        msg: `用户登录信息已失效，请重新登录`
                     };
                 } else { // 如果不是调api请求数据，则重定向到登录页
                     console.log('验证登录失败，跳转至首页登录');

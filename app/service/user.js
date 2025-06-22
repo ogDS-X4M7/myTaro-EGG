@@ -162,8 +162,52 @@ class UserService extends Service {
         }
     }
     // 获取点赞接口
-    // 更新收藏接口-包括增加和取消，传参token，url，signal信号-1表示点赞，0表示取消
+    async getLikes(data) {
+        // 注意查询用户使用的userid是ObjectId类型，因此要先转换才能查到
+        const userid = mongoose.Types.ObjectId(data.userid);
+        // 先查询用户
+        const user = await this.findOneUser({ _id: userid });
+        return user.likes;
+    }
+    // 更新收藏接口-包括增加和取消，传参token，url，signal信号-1表示收藏，0表示取消
+    async updateCollections(data) {
+        const userid = mongoose.Types.ObjectId(data.userid);
+        const user = await this.findOneUser({ _id: userid });
+        if (user.collections) {
+            // 收藏同样检测重复，同时根据信号判断是收藏还是取消
+            let newCollections = user.collections.filter(item => item !== data.collection);
+            let repeat = false; // 重复信号
+            if (newCollections.length === user.collections.length) repeat = true;
+            // 长度没变说明无重复，收藏就直接进，取消那就是乱来了
+            if (repeat) {
+                if (data.signal) {
+                    return this.addToArrayField(data.userid, 'collections', data.collection)
+                } else {
+                    return '错误，并未收藏'
+                }
+            } else {
+                // 重复,取消就把new放进去，收藏也是有问题，反馈点过了
+                if (data.signal) {
+                    return '错误，已经收藏过'
+                } else {
+                    return this.updateOneUser(
+                        { _id: data.userid },
+                        { $set: { collections: newCollections } }
+                    );
+                }
+            }
+        } else {
+            return this.addToArrayField(data.userid, 'collections', data.collection)
+        }
+    }
     // 获取收藏接口
+    async getCollections(data) {
+        // 注意查询用户使用的userid是ObjectId类型，因此要先转换才能查到
+        const userid = mongoose.Types.ObjectId(data.userid);
+        // 先查询用户
+        const user = await this.findOneUser({ _id: userid });
+        return user.collections;
+    }
 }
 
 module.exports = UserService;

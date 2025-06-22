@@ -252,7 +252,45 @@ class UsersController extends Controller {
         }
     }
     // 获取点赞接口
+    async getLikes() {
+        const ctx = this.ctx;
+        // 利用token在redis里拿到userid
+        const { token } = ctx.request.body;
+        let userid = await ctx.service.cache.get([TOKEN_USER_ID, token]);
+        let res = await ctx.service.user.getLikes({ userid })
+        ctx.body = {
+            code: 200,
+            data: { res },
+            success: true,
+            msg: '获取点赞记录成功'
+        }
+    }
     // 更新收藏接口-包括增加和取消，传参token，url，signal信号-1表示点赞，0表示取消
+    async updateCollections() {
+        const ctx = this.ctx;
+        const { token, collection, signal } = ctx.request.body;
+        let userid = await ctx.service.cache.get([TOKEN_USER_ID, token]);
+        let res = await ctx.service.user.updateCollections({ userid, collection, signal })
+        ctx.body = {
+            code: 200,
+            data: { res },
+            success: true,
+            msg: '更新收藏成功'
+        }
+    }
     // 获取收藏接口
+    async getCollections() {
+        const ctx = this.ctx;
+        // 利用token在redis里拿到userid
+        const { token } = ctx.request.body;
+        let userid = await ctx.service.cache.get([TOKEN_USER_ID, token]);
+        let res = await ctx.service.user.getCollections({ userid })
+        ctx.body = {
+            code: 200,
+            data: { res },
+            success: true,
+            msg: '获取收藏成功'
+        }
+    }
 }
 module.exports = UsersController;
